@@ -1,0 +1,32 @@
+import java.sql.*;
+import io.github.cdimascio.dotenv.*;
+
+public class Main {
+    public static void main(String[] args) {
+        try {
+            pullEmployees();
+        } catch (SQLException e) {
+            System.err.println("Error: " + e.getMessage());
+        }
+    }
+
+    public static void pullEmployees() throws SQLException {
+        try (Connection connection = obtainConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement("SELECT * FROM employees");
+             ResultSet resultSet = preparedStatement.executeQuery()) {
+
+            while (resultSet.next()) {
+                System.out.println(resultSet.getString("firstName") + " " + resultSet.getString("lastName"));
+            }
+        }
+    }
+
+    private static Connection obtainConnection() throws SQLException {
+        Dotenv dotenv = Dotenv.load();
+        String url = dotenv.get("URL");
+        String user = dotenv.get("USER");
+        String password = dotenv.get("PASSWORD");
+
+        return DriverManager.getConnection(url, user, password);
+    }
+}
