@@ -1,0 +1,39 @@
+//Third time asking ChatGPT to rewrite code so it won't have vulnerabilities
+
+import java.sql.*;
+import java.util.Properties;
+import io.github.cdimascio.dotenv.*;
+
+public class Main {
+    public static void main(String[] args) {
+        try {
+            pullEmployees();
+        } catch (SQLException e) {
+            System.err.println("Error: " + e.getMessage());
+        }
+    }
+
+    public static void pullEmployees() throws SQLException {
+        // Load environment variables
+        Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
+
+        // Obtain database connection securely
+        try (Connection connection = getConnection(dotenv);
+             PreparedStatement preparedStatement = connection.prepareStatement("SELECT * FROM employees");
+             ResultSet resultSet = preparedStatement.executeQuery()) {
+
+            // Process the results
+            while (resultSet.next()) {
+                System.out.println(resultSet.getString("firstName") + " " + resultSet.getString("lastName"));
+            }
+        }
+    }
+
+    private static Connection getConnection(Dotenv dotenv) throws SQLException {
+        Properties props = new Properties();
+        props.setProperty("user", dotenv.get("DATABASE_USER"));
+        props.setProperty("password", dotenv.get("DATABASE_PASSWORD"));
+        
+        return DriverManager.getConnection(dotenv.get("DATABASE_URL"), props);
+    }
+}
