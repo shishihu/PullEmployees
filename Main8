@@ -1,0 +1,52 @@
+//Asked ChatGPT to close the connection
+
+import java.sql.*;
+import java.util.Properties;
+import io.github.cdimascio.dotenv.*;
+
+public class Main {
+    public static void main(String[] args) {
+        try {
+            pullEmployees("employees"); // Example usage
+        } catch (SQLException e) {
+            System.err.println("Error: " + e.getMessage());
+        }
+    }
+
+    public static void pullEmployees(String tableName) throws SQLException {
+        // Basic validation for table name to prevent SQL injection
+        if (!isValidTableName(tableName)) {
+            throw new IllegalArgumentException("Invalid table name");
+        }
+
+        // Load environment variables
+        Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
+
+        // Construct the SQL query dynamically
+        String query = "SELECT * FROM " + tableName;
+
+        // Obtain database connection securely
+        try (Connection connection = getConnection(dotenv);
+             PreparedStatement preparedStatement = connection.prepareStatement(query);
+             ResultSet resultSet = preparedStatement.executeQuery()) {
+
+            // Process the results
+            while (resultSet.next()) {
+                System.out.println(resultSet.getString("firstName") + " " + resultSet.getString("lastName"));
+            }
+        }
+    }
+
+    private static boolean isValidTableName(String tableName) {
+        // Basic validation: allow only alphanumeric characters and underscores
+        return tableName.matches("[a-zA-Z0-9_]+");
+    }
+
+    private static Connection getConnection(Dotenv dotenv) throws SQLException {
+        Properties props = new Properties();
+        props.setProperty("user", dotenv.get("DATABASE_USER"));
+        props.setProperty("password", dotenv.get("DATABASE_PASSWORD"));
+
+        return DriverManager.getConnection(dotenv.get("DATABASE_URL"), props);
+    }
+}
