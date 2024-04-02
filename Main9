@@ -1,0 +1,48 @@
+//Change query to "Select * from Employee Where salary > 50000 and unit = 5"
+
+import java.sql.*;
+import java.util.Properties;
+import io.github.cdimascio.dotenv.*;
+
+public class Main {
+    public static void main(String[] args) {
+        try {
+            pullEmployeesWithCondition(50000, 5); // Example usage
+        } catch (SQLException e) {
+            System.err.println("Error: " + e.getMessage());
+        }
+    }
+
+    public static void pullEmployeesWithCondition(int minSalary, int unit) throws SQLException {
+        // Load environment variables
+        Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
+
+        // Construct the SQL query dynamically with placeholders
+        String query = "SELECT * FROM Employee WHERE salary > ? AND unit = ?";
+
+        // Obtain database connection securely
+        try (Connection connection = getConnection(dotenv);
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+
+            // Set parameter values for the prepared statement
+            preparedStatement.setInt(1, minSalary);
+            preparedStatement.setInt(2, unit);
+
+            // Execute the query
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                // Process the results
+                while (resultSet.next()) {
+                    System.out.println(resultSet.getString("firstName") + " " + resultSet.getString("lastName"));
+                }
+            }
+        }
+    }
+
+    private static Connection getConnection(Dotenv dotenv) throws SQLException {
+        Properties props = new Properties();
+        props.setProperty("user", dotenv.get("DATABASE_USER"));
+        props.setProperty("password", dotenv.get("DATABASE_PASSWORD"));
+
+        return DriverManager.getConnection(dotenv.get("DATABASE_URL"), props);
+    }
+}
